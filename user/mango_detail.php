@@ -1,189 +1,168 @@
+<?php
+require_once '../admin/db.php';
+
+if (!isset($_GET['name'])) {
+    header('Location: mango_varieties.php');
+    exit;
+}
+
+$name = $_GET['name'];
+
+// ดึงข้อมูลมะม่วงจากฐานข้อมูล
+$stmt = $conn->prepare("SELECT * FROM mango_varieties WHERE mango_name = ?");
+$stmt->bind_param("s", $name);
+$stmt->execute();
+$result = $stmt->get_result();
+$mango = $result->fetch_assoc();
+
+if (!$mango) {
+    echo "ไม่พบข้อมูลสายพันธุ์";
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ข้อมูลพันธุ์มะม่วง</title>
-  <style>
-    body {
-      font-family: "Kanit", sans-serif;
-      background-color: #fff;
-      margin: 20px;
-      padding: 0;
-    }
-    .header {
-      text-align: center;
-    }
-    .header img {
-      width: 100%;
-      max-height: 300px;
-      object-fit: cover;
-    }
-    .section {
-      margin-top: 30px;
-    }
-    .center-img {
-      display: block;
-      margin: 20px auto;
-      max-width: 300px;
-      border: 2px solid #ddd;
-    }
-    .columns {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .column {
-      flex: 1;
-      background-color: #e3f2fd;
-      padding: 15px;
-      border-radius: 10px;
-    }
-    .column h3 {
-      margin-top: 0;
-    }
-    ul {
-      padding-left: 20px;
-    }
-    .info-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 32px;
-      margin-bottom: 30px;
-    }
-    .info-img {
-      flex: 0 0 50vw;
-      max-width: 50vw;
-      min-width: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .info-img img {
-      width: 100%;
-      height: auto;
-      max-width: 100%;
-      border: 2px solid #ddd;
-      border-radius: 16px;
-      display: block;
-      margin: 0;
-      object-fit: cover;
-    }
-    .info-content {
-      flex: 1;
-      background: #e3f2fd;
-      border-radius: 10px;
-      padding: 18px 22px;
-      min-width: 0;
-    }
-    @media (max-width: 900px) {
-      .info-row {
-        flex-direction: column;
-        gap: 16px;
-      }
-      .info-img, .info-img img {
-        max-width: 100vw;
-        min-width: 0;
-      }
-      .info-content {
-        padding: 14px 10px;
-      }
-      /* ปรับให้กล่อง morphology-box กว้าง 50% และอยู่ตรงกลาง */
-.morphology-box {
-  width: 50%;
-  margin: 0 auto;
-  justify-content: space-between;
-}
-
-@media (max-width: 900px) {
-  .morphology-box {
-    width: 100%;
-    flex-direction: column;
-  }
-}
-
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title><?= htmlspecialchars($mango['mango_name']) ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Kanit", sans-serif;
+            background-color: #fff;
+            margin: 20px;
+            padding: 0;
+        }
+        .row h2, .row h4, .container h4 {
+            font-weight: 600;
+        }
+        p strong {
+            font-weight: 400;
+        }
+        .col-6 img {
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .col-6:hover img {
+            transform: scale(1.1);
+        }
+        /* ลักษณะสัณฐานวิทยา */
+        .morphology-section {
+            max-width: 50vw;
+            margin: 40px auto 0 auto;
+        }
+        .morphology-columns {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .morphology-column {
+            flex: 1;
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .morphology-column h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        @media (max-width: 900px) {
+            .morphology-section {
+                max-width: 100vw;
+            }
+            .morphology-columns {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-  <div class="header">
-    <img src="https://media.istockphoto.com/id/1435602408/th/%E0%B8%A3%E0%B8%B9%E0%B8%9B%E0%B8%96%E0%B9%88%E0%B8%B2%E0%B8%A2/%E0%B8%9B%E0%B8%B4%E0%B8%94%E0%B8%9C%E0%B8%A5%E0%B9%84%E0%B8%A1%E0%B9%89%E0%B8%A1%E0%B8%B0%E0%B8%A1%E0%B9%88%E0%B8%A7%E0%B8%87%E0%B9%81%E0%B8%94%E0%B8%87.jpg?s=2048x2048&w=is&k=20&c=_CtXk_bCsLbqqFFV1nNllvyUhNnJL_TusxCHO-FTHOQ=" alt="ภาพมะม่วงหลายผล">
-    <h1>ชื่อพันธุ์ภาษาไทย<br>ชื่อพันธุ์ภาษาอังกฤษ</h1>
-  </div>
-
-  <div class="section">
-    <!-- แถวแสดงภาพ + ข้อมูลทั่วไป -->
-    <div class="info-row">
-      <!-- รูปผลมะม่วงเดี่ยว -->
-      <div class="info-img">
-        <img src="https://media.istockphoto.com/id/1180170520/th/%E0%B8%A3%E0%B8%B9%E0%B8%9B%E0%B8%96%E0%B9%88%E0%B8%B2%E0%B8%A2/%E0%B8%A1%E0%B8%B0%E0%B8%A1%E0%B9%88%E0%B8%A7%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%81%E0%B8%A2%E0%B8%81%E0%B8%9A%E0%B8%99%E0%B8%9E%E0%B8%B7%E0%B9%89%E0%B8%99%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B5%E0%B8%82%E0%B8%B2%E0%B8%A7-%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99%E0%B8%97%E0%B8%B2%E0%B8%87%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%95%E0%B8%B1%E0%B8%94-%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A5%E0%B8%B6%E0%B8%81%E0%B9%80%E0%B8%95%E0%B9%87%E0%B8%A1%E0%B8%A3%E0%B8%B9%E0%B8%9B%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%AA%E0%B8%99%E0%B8%B2%E0%B8%A1.jpg?s=612x612&w=0&k=20&c=i4Y8_kDD3V-xGErxkLiiWniFNC_0fabV__R53JFlGbQ=" alt="ภาพผลเดียว">
-      </div>
-      <!-- กล่องข้อมูลทั่วไป -->
-      <div class="info-content">
-        <h2>ชื่อวิทยาศาสตร์</h2>
-        <ul>
-          <li>ชื่อท้องถิ่น</li>
-          <li>หมวดมะม่วง: เชิงพาณิชย์, เชิงอนุรักษ์, บริโภคในครัวเรือน</li>
-        </ul>
-        <h2>การขยายพันธุ์</h2>
-        <ul>
-          <li>การเพาะจากเมล็ด</li>
-          <li>เสียบยอด</li>
-          <li>ทาบกิ่ง</li>
-        </ul>
-        <h2>ลักษณะของดิน</h2>
-        <p>—</p>
-        <h2>ระยะเวลาเพาะปลูก</h2>
-        <p>—</p>
-        <h2>การแปรรูป</h2>
-        <ul>
-          <li>ดอง</li>
-          <li>แช่อิ่ม</li>
-          <li>กวน</li>
-          <li>อบแห้ง</li>
-        </ul>
-        <h2>นิยมรับประทานสด</h2>
-        <p>—</p>
-      </div>
+<?php include 'navbar.php'; ?>
+<br>
+<div class="container py-5 mt-5">
+    <div class="row">
+        <!-- คอลัมน์ซ้าย -->
+        <div class="col-md-4">
+            <h2 class="mb-4"><?= htmlspecialchars($mango['mango_name']) ?></h2>
+            <img src="../admin/uploads/<?= htmlspecialchars(basename($mango['fruit_image'])) ?>" class="img-fluid mb-3" alt="<?= htmlspecialchars($mango['mango_name']) ?>" style="max-height: 400px;">
+        </div>
+        <!-- คอลัมน์กลาง -->
+        <div class="col-md-4">
+            <h4>ข้อมูลทั่วไป</h4>
+            <p><strong>ชื่อวิทยาศาสตร์:</strong> <?= htmlspecialchars($mango['scientific_name']) ?></p>
+            <p><strong>ชื่อท้องถิ่น:</strong> <?= !empty($mango['local_name']) ? htmlspecialchars($mango['local_name']) : '-' ?></p>
+            <h4 class="mt-4">ลักษณะสัณฐานวิทยา</h4>
+            <p><strong>ลำต้น:</strong> <?= htmlspecialchars($mango['morphology_stem']) ?></p>
+            <p><strong>ผล:</strong> <?= htmlspecialchars($mango['morphology_fruit']) ?></p>
+            <p><strong>ใบ:</strong> <?= htmlspecialchars($mango['morphology_leaf']) ?></p>
+            <h4>การเพาะปลูก</h4>
+            <p><strong>การขยายพันธุ์:</strong> <?= htmlspecialchars($mango['propagation_method']) ?></p>
+            <p><strong>ลักษณะดิน:</strong> <?= htmlspecialchars($mango['soil_characteristics']) ?></p>
+            <p><strong>ระยะเวลาเพาะปลูก:</strong> <?= htmlspecialchars($mango['planting_period']) ?></p>
+            <p><strong>ช่วงฤดูกาลออกดอก:</strong> <?= htmlspecialchars($mango['harvest_season']) ?></p>
+        </div>
+        <!-- คอลัมน์ขวา -->
+        <div class="col-md-4">
+            <h4>การแปรรูป</h4>
+            <p><?= nl2br(htmlspecialchars($mango['processing_methods'])) ?></p>
+            <h4 class="mt-4">หมวดหมู่มะม่วง</h4>
+            <p><strong>ประเภท:</strong> <?= htmlspecialchars($mango['mango_category']) ?></p>
+            <h4 class="mt-4">นิยมรับประทานสด</h4>
+            <p><?= htmlspecialchars($mango['fresh_consumption']) ?></p>
+        </div>
     </div>
-  </div>
 
-  <!-- ✅ ลักษณะสัณฐานวิทยา: อยู่ด้านล่าง info-row และกว้างแค่ครึ่งหน้าจอ -->
-  <div class="section" style="max-width: 50vw; margin: 0 auto;">
-    <h2 style="text-align: center;">ลักษณะสัณฐานวิทยา</h2>
-    <div class="columns morphology-box">
-      <div class="column">
-        <h3>ต้น</h3>
-        <ul>
-          <li>ฟอร์มต้น</li>
-          <li>ทรวดทรง</li>
-          <li>แตกกิ่งย่อย</li>
-          <li>ช่องอากาศ</li>
-        </ul>
-      </div>
-      <div class="column">
-        <h3>ใบ</h3>
-        <ul>
-          <li>การเรียงใบ</li>
-          <li>ลักษณะใบ</li>
-          <li>แผ่นใบ</li>
-          <li>ที่มีช่องอากาศ</li>
-        </ul>
-      </div>
-      <div class="column">
-        <h3>ดอก</h3>
-        <ul>
-          <li>ขนาด</li>
-          <li>รูปร่าง</li>
-          <li>รูปพุ่มหรือช่อ</li>
-          <li>รูปทรงเฉพาะตัว</li>
-        </ul>
-      </div>
+    <!-- ลักษณะสัณฐานวิทยาแบบ 3 คอลัมน์ กว้างครึ่งหน้าจอ -->
+    <div class="morphology-section">
+        <h2 class="text-center">ลักษณะสัณฐานวิทยา</h2>
+        <div class="morphology-columns">
+            <div class="morphology-column">
+                <h3>ต้น</h3>
+                <ul>
+                    <li><?= htmlspecialchars($mango['morphology_stem']) ?></li>
+                </ul>
+            </div>
+            <div class="morphology-column">
+                <h3>ใบ</h3>
+                <ul>
+                    <li><?= htmlspecialchars($mango['morphology_leaf']) ?></li>
+                </ul>
+            </div>
+            <div class="morphology-column">
+                <h3>ดอก</h3>
+                <ul>
+                    <li><?= htmlspecialchars($mango['morphology_flower']) ?></li>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
 
-  
-
+    <h4 class="mt-5">รูปภาพ</h4>
+    <div class="row text-center">
+        <div class="col-6 col-md-3 mb-3">
+            <h6>ต้น</h6>
+            <img src="../admin/uploads/<?= htmlspecialchars(basename($mango['tree_image'])) ?>" class="img-fluid mb-3" alt="ต้นมะม่วง" style="object-fit: cover; width: 100%; height: 200px;">
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <h6>ใบ</h6>
+            <img src="../admin/uploads/<?= htmlspecialchars(basename($mango['leaf_image'])) ?>" class="img-fluid mb-3" alt="ใบมะม่วง" style="object-fit: cover; width: 100%; height: 200px;">
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <h6>กิ่ง</h6>
+            <img src="../admin/uploads/<?= htmlspecialchars(basename($mango['branch_image'])) ?>" class="img-fluid mb-3" alt="กิ่งมะม่วง" style="object-fit: cover; width: 100%; height: 200px;">
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <h6>ดอก</h6>
+            <img src="../admin/uploads/<?= htmlspecialchars(basename($mango['flower_image'])) ?>" class="img-fluid mb-3" alt="ดอกมะม่วง" style="object-fit: cover; width: 100%; height: 200px;">
+        </div>
+    </div>
+    <a href="mango_varieties.php" class="btn btn-secondary mt-4">← กลับหน้ารวม</a>
+</div>
+<?php include 'footer.php'; ?>
 </body>
 </html>
